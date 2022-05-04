@@ -92,6 +92,7 @@ class sub_window(QWidget):
         self.prog.clear()
         self.ui_sub.listWidget.clear()
         self.ui_sub.listWidget_2.clear()
+        self.threadpool.clear()
 
     def cancel_btn_clicked(self):
         """
