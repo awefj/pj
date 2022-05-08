@@ -113,20 +113,29 @@ class sub_window(QWidget):
         self.ui_sub.progressBar.setValue(0)
         selected = []
         count = 0
-        print(self.ui_sub.listWidget_2.count())
+        # print(f"items count : {self.ui_sub.listWidget_2.count()}")
         for index in range(self.ui_sub.listWidget_2.count()):
             if self.ui_sub.listWidget_2.item(index).checkState() == Qt.Checked:
                 selected.append(self.ui_sub.listWidget_2.item(index).text())
         time = datetime.datetime.now().strftime("%T")
         total = len(selected)
         self.ui_sub.listWidget.addItem(f"{time.__str__()}\t{total} items selected")
+        self.ui_sub.listWidget.scrollToBottom()
         for target in selected:
-            os.remove(target)
-            print(f"remove {target}")
-            count+=1
-            self.ui_sub.progressBar.setValue(count/total*100)
+            try:
+                os.remove(target)
+                self.ui_sub.listWidget.addItem(f"remove {target}")
+                self.ui_sub.listWidget.scrollToBottom()
+            except:
+                self.ui_sub.listWidget.addItem(f"failed to remove {target}")
+                self.ui_sub.listWidget.scrollToBottom()
+            finally:
+                count += 1
+                self.ui_sub.progressBar.setValue(count / total * 100)
+
         self.ui_sub.progressBar.setValue(100)
-        self.ui_sub.listWidget.addItem("completed")
+        self.ui_sub.listWidget.addItem("delete completed")
+        self.ui_sub.listWidget.scrollToBottom()
 
     def closeEvent(self, event: PySide6.QtGui.QCloseEvent) -> None:
         """
