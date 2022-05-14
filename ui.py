@@ -216,10 +216,17 @@ class sub_window(QWidget):
         # self.ui_sub.listWidget_2.addItems(r)
         for key in r:
             self.ui_sub.listWidget_2.addItem(f"count : {len(r[key])} size : {key[0]}\n hash : {key[1]}")
+            count = 0
             for item in r[key]:
+                #head_tail = os.path.split(item)
+                #target = QListWidgetItem(f"directory : {head_tail[0]} \t\t file name : {head_tail[1]}")
                 target = QListWidgetItem(f"{item}")
                 target.setFlags(target.flags() | QtCore.Qt.ItemIsUserCheckable)
-                target.setCheckState(QtCore.Qt.Unchecked)
+                if count == 0:
+                    target.setCheckState(QtCore.Qt.Unchecked)
+                else:
+                    target.setCheckState(QtCore.Qt.Checked)
+                count += 1
                 self.ui_sub.listWidget_2.addItem(target)
 
         pass
