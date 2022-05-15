@@ -111,31 +111,40 @@ class sub_window(QWidget):
         # self.ui_sub.listWidget_2.findChild()
         print("sub_window delete")
         self.ui_sub.progressBar.setValue(0)
-        selected = []
-        count = 0
         # print(f"items count : {self.ui_sub.listWidget_2.count()}")
+
+        worker = worker_obj(self.remover)
+        #worker.signal.result.connect(self.result)
+        #worker.signal.finished.connect(self.complete)
+        worker.signal.progress.connect(self.progress)
+        self.threadpool.start(worker)
+
+    def remover(self, progress_callback):
+        selected = []
+        complete = 0
+        failed = 0
+        count = 0
+        text = None
         for index in range(self.ui_sub.listWidget_2.count()):
             if self.ui_sub.listWidget_2.item(index).checkState() == Qt.Checked:
                 selected.append(self.ui_sub.listWidget_2.item(index).text())
-        time = datetime.datetime.now().strftime("%T")
         total = len(selected)
-        self.ui_sub.listWidget.addItem(f"{time.__str__()}\t{total} items selected")
-        self.ui_sub.listWidget.scrollToBottom()
         for target in selected:
             try:
                 os.remove(target)
-                self.ui_sub.listWidget.addItem(f"remove {target}")
-                self.ui_sub.listWidget.scrollToBottom()
-            except:
-                self.ui_sub.listWidget.addItem(f"failed to remove {target}")
-                self.ui_sub.listWidget.scrollToBottom()
+                # self.ui_sub.listWidget.addItem(f"remove {target}")
+                text = f"remove {target}"
+                complete += 1
+            except(OSError,):
+                # self.ui_sub.listWidget.addItem(f"failed to remove {target}")
+                text = f"failed to remove {target}"
+                failed += 1
             finally:
                 count += 1
-                self.ui_sub.progressBar.setValue(count / total * 100)
-
-        self.ui_sub.progressBar.setValue(100)
-        self.ui_sub.listWidget.addItem("delete completed")
-        self.ui_sub.listWidget.scrollToBottom()
+                progress_callback.emit(count / total * 100, text)
+        progress_callback.emit(100, "delete complete")
+        progress_callback.emit(100, f"total : {count} , successful : {complete} , failed : {failed}")
+        return None
 
     def closeEvent(self, event: PySide6.QtGui.QCloseEvent) -> None:
         """
@@ -149,11 +158,18 @@ class sub_window(QWidget):
         self.dirs = directory
         self.fast = fast
 
-    def progress(self, n, s):
+    def progress(self, n=None, s=None):
         time = datetime.datetime.now()
         time = time.strftime("%T")
-        self.ui_sub.progressBar.setValue(n)
-        self.ui_sub.listWidget.addItem(time.__str__() + "\t" + s)
+        if n is None:
+            self.ui_sub.listWidget.addItem(time.__str__() + "\t" + s)
+            self.ui_sub.listWidget.scrollToBottom()
+        elif s is None:
+            self.ui_sub.progressBar.setValue(n)
+        else:
+            self.ui_sub.progressBar.setValue(n)
+            self.ui_sub.listWidget.addItem(time.__str__() + "\t" + s)
+            self.ui_sub.listWidget.scrollToBottom()
 
     def execute(self, progress_callback):
         self.prog.set_param(self.dirs, self.fast)
@@ -218,8 +234,8 @@ class sub_window(QWidget):
             self.ui_sub.listWidget_2.addItem(f"count : {len(r[key])} size : {key[0]}\n hash : {key[1]}")
             count = 0
             for item in r[key]:
-                #head_tail = os.path.split(item)
-                #target = QListWidgetItem(f"directory : {head_tail[0]} \t\t file name : {head_tail[1]}")
+                # head_tail = os.path.split(item)
+                # target = QListWidgetItem(f"directory : {head_tail[0]} \t\t file name : {head_tail[1]}")
                 target = QListWidgetItem(f"{item}")
                 target.setFlags(target.flags() | QtCore.Qt.ItemIsUserCheckable)
                 if count == 0:
@@ -232,7 +248,8 @@ class sub_window(QWidget):
         pass
 
     def complete(self):
-        print("thread complete")
+        # print("thread complete")
+        pass
 
     def run_worker(self):
         worker = worker_obj(self.execute)
@@ -281,6 +298,8 @@ class main_window(QMainWindow):
 
         print(f"given params - directory : {dirs}, isfast : {fast}")
         self.ui_sub.set_param(dirs, fast)
+        # Form.setWindowTitle(QCoreApplication.translate("Form", u"Form", None))
+        self.ui_sub.setWindowTitle(QCoreApplication.translate("Form", u"Running", None))
         self.ui_sub.run_worker()
         self.ui_sub.show()
         self.ui_sub.parent.hide()
