@@ -53,17 +53,17 @@ class dir_widget(QWidget):
         """
         show file dialog to choose directory
         """
-        print("dir_btn")
+        # print("dir_btn")
         path = QFileDialog.getExistingDirectory(self, "Directory", "C:/", QFileDialog.ShowDirsOnly)
-        print(f"path : {path}")
+        # print(f"path : {path}")
         self.dir_input.setText(path)
 
     def del_btn_clicked(self):
         """
         delete widget
         """
-        print("del_btn")
-        print(f"delete dir_widget {self} : {self.dir_input.text()}")
+        # print("del_btn")
+        # print(f"delete dir_widget {self} : {self.dir_input.text()}")
         self.deleteLater()
 
 
@@ -98,24 +98,21 @@ class sub_window(QWidget):
         """
             hide window
         """
-        print("sub_window cancel")
+        # print("sub_window cancel")
         self.cleanup()
         self.hide()
         self.parent.show()
-        # sys.exit()
 
     def delete_btn_clicked(self):
         """
             delete selected items
         """
-        # self.ui_sub.listWidget_2.findChild()
-        print("sub_window delete")
+        # print("sub_window delete")
         self.ui_sub.progressBar.setValue(0)
         # print(f"items count : {self.ui_sub.listWidget_2.count()}")
 
         worker = worker_obj(self.remover)
-        #worker.signal.result.connect(self.result)
-        #worker.signal.finished.connect(self.complete)
+        worker.signal.finished.connect(self.complete)
         worker.signal.progress.connect(self.progress)
         self.threadpool.start(worker)
 
@@ -125,10 +122,12 @@ class sub_window(QWidget):
         failed = 0
         count = 0
         text = None
+        # get list of files to delete
         for index in range(self.ui_sub.listWidget_2.count()):
             if self.ui_sub.listWidget_2.item(index).checkState() == Qt.Checked:
                 selected.append(self.ui_sub.listWidget_2.item(index).text())
         total = len(selected)
+
         for target in selected:
             try:
                 os.remove(target)
@@ -151,7 +150,7 @@ class sub_window(QWidget):
         :param event:
         """
         self.cleanup()
-        print("sub_window hide")
+        # print("sub_window hide")
         self.parent.show()
 
     def set_param(self, directory, fast):
@@ -159,6 +158,10 @@ class sub_window(QWidget):
         self.fast = fast
 
     def progress(self, n=None, s=None):
+        """
+        :param n: value shows in progressBar
+        :param s: log string in listWidget
+        """
         time = datetime.datetime.now()
         time = time.strftime("%T")
         if n is None:
@@ -172,6 +175,10 @@ class sub_window(QWidget):
             self.ui_sub.listWidget.scrollToBottom()
 
     def execute(self, progress_callback):
+        """
+        :param progress_callback:
+        :return:
+        """
         self.prog.set_param(self.dirs, self.fast)
         progress_callback.emit(0, f"directories : {self.dirs}, fast : {self.fast}")
         if self.fast:
@@ -182,17 +189,20 @@ class sub_window(QWidget):
             progress_callback.emit(25, f"sorting files by size")
             self.prog.get_items_by_size_dupe()
             progress_callback.emit(30,
-                                   f"size count : {self.prog.same_size_count}, file count : {self.prog.same_size_item_count}")
+                                   f"size count : {self.prog.same_size_count}, "
+                                   f"file count : {self.prog.same_size_item_count}")
 
             progress_callback.emit(35, f"getting hash values from file's first 1k bits")
             self.prog.get_hash_1k_list()
             progress_callback.emit(60,
-                                   f"hash count : {self.prog.hash1k_count}, file count : {self.prog.hash1k_item_count}")
+                                   f"hash count : {self.prog.hash1k_count}, "
+                                   f"file count : {self.prog.hash1k_item_count}")
 
             progress_callback.emit(90, f"sorting files by 1k hash values")
             self.prog.get_same_hash_1k_list()
             progress_callback.emit(100,
-                                   f"hash count: {self.prog.same_hash1k_count}, file count : {self.prog.same_hash1k_item_count}")
+                                   f"hash count: {self.prog.same_hash1k_count}, "
+                                   f"file count : {self.prog.same_hash1k_item_count}")
 
             return self.prog.hash1k
         else:
@@ -203,46 +213,48 @@ class sub_window(QWidget):
             progress_callback.emit(25, f"sorting files by size")
             self.prog.get_items_by_size_dupe()
             progress_callback.emit(30,
-                                   f"size count : {self.prog.same_size_count}, file count : {self.prog.same_size_item_count}")
+                                   f"size count : {self.prog.same_size_count}, "
+                                   f"file count : {self.prog.same_size_item_count}")
 
             progress_callback.emit(35, f"getting hash values from file's first 1k bits")
             self.prog.get_hash_1k_list()
             progress_callback.emit(60,
-                                   f"hash count : {self.prog.hash1k_count}, file count : {self.prog.hash1k_item_count}")
+                                   f"hash count : {self.prog.hash1k_count}, "
+                                   f"file count : {self.prog.hash1k_item_count}")
 
             progress_callback.emit(65, f"sorting files by 1k hash values")
             self.prog.get_same_hash_1k_list()
             progress_callback.emit(70,
-                                   f"hash count: {self.prog.same_hash1k_count}, file count : {self.prog.same_hash1k_item_count}")
+                                   f"hash count: {self.prog.same_hash1k_count}, "
+                                   f"file count : {self.prog.same_hash1k_item_count}")
 
             progress_callback.emit(75, f"sorting files by hash values")
             self.prog.get_hash_list()
             progress_callback.emit(90,
-                                   f"hash count: {self.prog.hash_count}, file count : {self.prog.hash_item_count}")
+                                   f"hash count: {self.prog.hash_count}, "
+                                   f"file count : {self.prog.hash_item_count}")
 
             progress_callback.emit(95, f"sorting files by hash values")
             self.prog.get_same_hash_list()
             progress_callback.emit(100,
-                                   f"hash count: {self.prog.same_hash_count}, file count : {self.prog.same_hash_item_count}")
+                                   f"hash count: {self.prog.same_hash_count}, "
+                                   f"file count : {self.prog.same_hash_item_count}")
 
             return self.prog.hash
 
     def result(self, r):
-        # self.ui_sub.tableWidget
-        # self.ui_sub.listWidget_2.addItems(r)
         for key in r:
             self.ui_sub.listWidget_2.addItem(f"count : {len(r[key])} size : {key[0]}\n hash : {key[1]}")
             count = 0
             for item in r[key]:
-                # head_tail = os.path.split(item)
-                # target = QListWidgetItem(f"directory : {head_tail[0]} \t\t file name : {head_tail[1]}")
                 target = QListWidgetItem(f"{item}")
                 target.setFlags(target.flags() | QtCore.Qt.ItemIsUserCheckable)
-                if count == 0:
+                count += 1
+                #if count == len(r[key]):
+                if count == 1:
                     target.setCheckState(QtCore.Qt.Unchecked)
                 else:
                     target.setCheckState(QtCore.Qt.Checked)
-                count += 1
                 self.ui_sub.listWidget_2.addItem(target)
 
         pass
@@ -277,7 +289,7 @@ class main_window(QMainWindow):
         """
         add widget
         """
-        print("main_window add")
+        # print("main_window add")
         # print(self.ui.verticalLayout.count())
         # self.ui.verticalLayout.insertWidget(self.ui.verticalLayout.count(), dir_widget())
         self.ui_main.verticalLayout_2.addWidget(dir_widget())
@@ -287,7 +299,7 @@ class main_window(QMainWindow):
         """
         execute duplicate search program
         """
-        print("main_window ok")
+        # print("main_window ok")
         fast = self.ui_main.checkBox.isChecked()
         child = self.findChildren(dir_widget)
         dirs = []
@@ -296,7 +308,7 @@ class main_window(QMainWindow):
             directory = item.dir_input.text()
             dirs.append(directory)
 
-        print(f"given params - directory : {dirs}, isfast : {fast}")
+        # print(f"given params - directory : {dirs}, isfast : {fast}")
         self.ui_sub.set_param(dirs, fast)
         # Form.setWindowTitle(QCoreApplication.translate("Form", u"Form", None))
         self.ui_sub.setWindowTitle(QCoreApplication.translate("Form", u"Running", None))
@@ -309,15 +321,16 @@ class main_window(QMainWindow):
         """
         exit program
         """
-        print("main_window cancel")
+        # print("main_window cancel")
         sys.exit()
 
     def closeEvent(self, event: PySide6.QtGui.QCloseEvent) -> None:
         """
         :param event:
         """
-        print("main_window destroyed")
+        # print("main_window destroyed")
         # self.thread.thread().quit()
+        self.ui_sub.cleanup()
 
 
 class worker_signal(QObject):
@@ -331,6 +344,10 @@ class worker_signal(QObject):
 
 
 class worker_obj(QRunnable):
+    """
+    threading class
+    """
+
     def __init__(self, fn, *args, **kwargs):
         super(worker_obj, self).__init__()
         self.fn = fn
@@ -342,6 +359,9 @@ class worker_obj(QRunnable):
 
     @Slot()
     def run(self):
+        """
+        :return: signals from worker_signal and result
+        """
         try:
             result = self.fn(*self.args, **self.kwargs)
         except:

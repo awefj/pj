@@ -41,14 +41,14 @@ class reader:
         for i in range(len(temp)):
             for j in range(i + 1, len(temp) - i):
                 if temp[i] in temp[j]:
-                    print(f"dir {temp[i]} is parent of dir {temp[j]}")
+                    # print(f"dir {temp[i]} is parent of dir {temp[j]}")
                     nums.append(j)
         nums.sort(reverse=True)
         for num in nums:
             temp.pop(num)
         for item in temp:
             result.append(os.path.abspath(item))
-        print(f"processed directory list : {result}")
+        # print(f"processed directory list : {result}")
         return result
 
     def get_items_by_size(self):
@@ -92,6 +92,9 @@ class reader:
                 print(f"\t{item}")
 
     def clear(self):
+        """
+        cleans current data
+        """
         self.items = defaultdict(list)
 
         self.size_count = 0
@@ -314,6 +317,9 @@ class hash_comp(reader):
         return self.hash1k
 
     def clear(self):
+        """
+        cleans current data
+        """
         super().clear()
         self.hash1k = defaultdict(list)
         self.hash = defaultdict(list)
