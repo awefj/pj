@@ -1,6 +1,7 @@
 import datetime
 import sys
 import os.path
+import time
 import traceback
 from collections import defaultdict
 
@@ -108,13 +109,21 @@ class sub_window(QWidget):
             delete selected items
         """
         # print("sub_window delete")
-        self.ui_sub.progressBar.setValue(0)
         # print(f"items count : {self.ui_sub.listWidget_2.count()}")
+        self.ui_sub.progressBar.setValue(0)
 
         worker = worker_obj(self.remover)
         worker.signal.finished.connect(self.complete)
         worker.signal.progress.connect(self.progress)
         self.threadpool.start(worker)
+
+        # test code
+        self.ui_sub.progressBar.setValue(0)
+
+        worker2 = worker_obj(self.tester)
+        worker2.signal.finished.connect(self.complete)
+        worker2.signal.progress.connect(self.progress)
+        self.threadpool.start(worker2)
 
     def remover(self, progress_callback):
         selected = []
@@ -128,14 +137,15 @@ class sub_window(QWidget):
                 selected.append(self.ui_sub.listWidget_2.item(index).text())
         total = len(selected)
 
+        if total == 0:
+            return
+
         for target in selected:
             try:
                 os.remove(target)
-                # self.ui_sub.listWidget.addItem(f"remove {target}")
                 text = f"remove {target}"
                 complete += 1
             except(OSError,):
-                # self.ui_sub.listWidget.addItem(f"failed to remove {target}")
                 text = f"failed to remove {target}"
                 failed += 1
             finally:
@@ -143,7 +153,13 @@ class sub_window(QWidget):
                 progress_callback.emit(count / total * 100, text)
         progress_callback.emit(100, "delete complete")
         progress_callback.emit(100, f"total : {count} , successful : {complete} , failed : {failed}")
-        return None
+
+    def tester(self, progress_callback):
+        target_num = 99999
+        test_text = 'testing text number : '
+        for i in range(1, target_num + 1):
+            progress_val = i / target_num * 100.00
+            progress_callback.emit(progress_val, f"{test_text}{i} {progress_val: .2f}%")
 
     def closeEvent(self, event: PySide6.QtGui.QCloseEvent) -> None:
         """
@@ -163,16 +179,13 @@ class sub_window(QWidget):
         :param s: log string in listWidget
         """
         time = datetime.datetime.now()
-        time = time.strftime("%T")
-        if n is None:
-            self.ui_sub.listWidget.addItem(time.__str__() + "\t" + s)
-            self.ui_sub.listWidget.scrollToBottom()
-        elif s is None:
+        #time = time.strftime("%T")
+        #print(f"{time.__str__()} : {n}% {s}")
+        if n:
             self.ui_sub.progressBar.setValue(n)
-        else:
-            self.ui_sub.progressBar.setValue(n)
-            self.ui_sub.listWidget.addItem(time.__str__() + "\t" + s)
-            self.ui_sub.listWidget.scrollToBottom()
+        if s:
+            self.ui_sub.listWidget.addItem(time.__str__() +"\t" + s)
+        #self.ui_sub.listWidget.scrollToBottom() # <-- causes gui freezing
 
     def execute(self, progress_callback):
         """
@@ -250,17 +263,17 @@ class sub_window(QWidget):
                 target = QListWidgetItem(f"{item}")
                 target.setFlags(target.flags() | QtCore.Qt.ItemIsUserCheckable)
                 count += 1
-                #if count == len(r[key]):
-                if count == 1:
+                if count == len(r[key]):
+                    # if count == 1:
                     target.setCheckState(QtCore.Qt.Unchecked)
                 else:
                     target.setCheckState(QtCore.Qt.Checked)
                 self.ui_sub.listWidget_2.addItem(target)
-
         pass
 
     def complete(self):
         # print("thread complete")
+        self.ui_sub.listWidget.scrollToBottom()
         pass
 
     def run_worker(self):
