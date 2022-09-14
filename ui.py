@@ -88,6 +88,7 @@ class sub_window(QWidget):
     def cleanup(self):
         self.threadpool.clear()
         self.ui_sub.progressBar.setValue(0)
+        self.ui_sub.pushButton_2.setDisabled(False)
         self.dirs = None
         self.fast = None
         self.prog.clear()
@@ -110,20 +111,15 @@ class sub_window(QWidget):
         """
         # print("sub_window delete")
         # print(f"items count : {self.ui_sub.listWidget_2.count()}")
-        self.ui_sub.progressBar.setValue(0)
+        if self.ui_sub.listWidget_2.count() == 0:
+            self.ui_sub.pushButton_2.setDisabled(True)
+            return
 
+        self.ui_sub.progressBar.setValue(0)
         worker = worker_obj(self.remover)
         worker.signal.finished.connect(self.complete)
         worker.signal.progress.connect(self.progress)
         self.threadpool.start(worker)
-
-        # test code
-        self.ui_sub.progressBar.setValue(0)
-
-        worker2 = worker_obj(self.tester)
-        worker2.signal.finished.connect(self.complete)
-        worker2.signal.progress.connect(self.progress)
-        self.threadpool.start(worker2)
 
     def remover(self, progress_callback):
         selected = []
@@ -154,13 +150,6 @@ class sub_window(QWidget):
         progress_callback.emit(100, "delete complete")
         progress_callback.emit(100, f"total : {count} , successful : {complete} , failed : {failed}")
 
-    def tester(self, progress_callback):
-        target_num = 99999
-        test_text = 'testing text number : '
-        for i in range(1, target_num + 1):
-            progress_val = i / target_num * 100.00
-            progress_callback.emit(progress_val, f"{test_text}{i} {progress_val: .2f}%")
-
     def closeEvent(self, event: PySide6.QtGui.QCloseEvent) -> None:
         """
         :param event:
@@ -178,14 +167,12 @@ class sub_window(QWidget):
         :param n: value shows in progressBar
         :param s: log string in listWidget
         """
-        time = datetime.datetime.now()
-        #time = time.strftime("%T")
-        #print(f"{time.__str__()} : {n}% {s}")
+        time = datetime.datetime.now().__str__()[:-2]
         if n:
             self.ui_sub.progressBar.setValue(n)
         if s:
-            self.ui_sub.listWidget.addItem(time.__str__() +"\t" + s)
-        #self.ui_sub.listWidget.scrollToBottom() # <-- causes gui freezing
+            self.ui_sub.listWidget.addItem(time + "\t" + s)
+        # self.ui_sub.listWidget.scrollToBottom() # <-- causes gui freezing
 
     def execute(self, progress_callback):
         """
