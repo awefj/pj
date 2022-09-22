@@ -85,6 +85,10 @@ class sub_window(QWidget):
         self.prog = hash_comp()
         self.threadpool = QThreadPool()
 
+        # keep scroll to bottom
+        bar = self.ui_sub.listWidget.verticalScrollBar()
+        bar.rangeChanged.connect(lambda x, y: bar.setValue(bar.maximum()))
+
     def cleanup(self):
         self.threadpool.clear()
         self.ui_sub.progressBar.setValue(0)
@@ -111,6 +115,16 @@ class sub_window(QWidget):
         """
         # print("sub_window delete")
         # print(f"items count : {self.ui_sub.listWidget_2.count()}")
+
+        # test code
+        """
+        self.ui_sub.progressBar.setValue(0)
+        worker2 = worker_obj(self.test)
+        worker2.signal.finished.connect(self.complete)
+        worker2.signal.progress.connect(self.progress)
+        self.threadpool.start(worker2)
+        """
+
         if self.ui_sub.listWidget_2.count() == 0:
             self.ui_sub.pushButton_2.setDisabled(True)
             return
@@ -120,6 +134,10 @@ class sub_window(QWidget):
         worker.signal.finished.connect(self.complete)
         worker.signal.progress.connect(self.progress)
         self.threadpool.start(worker)
+
+    def test(self, progress_callback):
+        for i in range(1, 10000):
+            progress_callback.emit(i / 9999 * 100, f"test text {i / 9999 * 100:.4f}%")
 
     def remover(self, progress_callback):
         selected = []
@@ -154,8 +172,8 @@ class sub_window(QWidget):
         """
         :param event:
         """
-        self.cleanup()
         # print("sub_window hide")
+        self.cleanup()
         self.parent.show()
 
     def set_param(self, directory, fast):
@@ -243,6 +261,7 @@ class sub_window(QWidget):
             return self.prog.hash
 
     def result(self, r):
+        # todo: check by directory, check reverse, mouse right click menu...
         for key in r:
             self.ui_sub.listWidget_2.addItem(f"count : {len(r[key])} size : {key[0]}\n hash : {key[1]}")
             count = 0
@@ -260,7 +279,7 @@ class sub_window(QWidget):
 
     def complete(self):
         # print("thread complete")
-        self.ui_sub.listWidget.scrollToBottom()
+        # self.ui_sub.listWidget.scrollToBottom()
         pass
 
     def run_worker(self):
