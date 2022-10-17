@@ -141,6 +141,7 @@ class sub_window(QWidget):
 
     def remover(self, progress_callback):
         selected = []
+        fail = []
         complete = 0
         failed = 0
         count = 0
@@ -161,12 +162,18 @@ class sub_window(QWidget):
                 complete += 1
             except(OSError,):
                 text = f"failed to remove {target}"
+                fail.append(target)
                 failed += 1
             finally:
                 count += 1
                 progress_callback.emit(count / total * 100, text)
         progress_callback.emit(100, "delete complete")
         progress_callback.emit(100, f"total : {count} , successful : {complete} , failed : {failed}")
+        # print deletion failed list
+        if len(fail) > 0:
+            progress_callback.emit(100, f"failed items:")
+            for item in fail:
+                progress_callback.emit(100, item)
 
     def closeEvent(self, event: PySide6.QtGui.QCloseEvent) -> None:
         """
